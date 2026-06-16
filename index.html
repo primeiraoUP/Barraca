@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tigrinho Humano - Sorteio</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.35), transparent 30%),
+        linear-gradient(135deg, #6e270b, #d97819, #ffd36b);
+      color: #2b1605;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      background: rgba(255, 248, 231, 0.96);
+      border: 5px solid #7a2e0d;
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 22px 55px rgba(0,0,0,0.32);
+      animation: enterApp 0.55s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(45deg, transparent 48%, rgba(122, 46, 13, 0.06) 49%, rgba(122, 46, 13, 0.06) 51%, transparent 52%);
+      background-size: 26px 26px;
+      pointer-events: none;
+    }
+
+    .app > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1, h2, h3 {
+      text-align: center;
+      margin-top: 0;
+      color: #7a2e0d;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-shadow: 0 3px 0 rgba(255, 211, 107, 0.7);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .firebase-loading a,
+    .firebase-loading button,
+    .firebase-loading input {
+      pointer-events: none;
+      opacity: 0.45;
+      filter: grayscale(0.4);
+    }
+
+    .firebase-loading .app::after {
+      content: "Aguardando conexão com o Firebase...";
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #7a2e0d;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: bold;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      z-index: 9998;
+      white-space: nowrap;
+      max-width: calc(100vw - 24px);
+      font-size: 14px;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.82;
+      margin-bottom: 12px;
+      font-weight: bold;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #c48a00;
+      padding: 12px;
+      border-radius: 14px;
+      margin: 14px 0;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .links {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    a, button {
+      border: none;
+      border-radius: 16px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    a {
+      background: #7a2e0d;
+      color: white;
+      box-shadow: 0 7px 0 #431804;
+    }
+
+    button {
+      background: #1f7a1f;
+      color: white;
+      box-shadow: 0 7px 0 #0d3d0d;
+    }
+
+    a:active, button:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .danger {
+      background: #9c1d1d;
+      box-shadow: 0 7px 0 #4c0a0a;
+    }
+
+    .blue {
+      background: #1d5f9c;
+      box-shadow: 0 7px 0 #0b3155;
+    }
+
+    .gray {
+      background: #555;
+      box-shadow: 0 7px 0 #2b2b2b;
+    }
+
+    .main-button {
+      width: 100%;
+      font-size: 24px;
+      padding: 20px;
+      border-radius: 22px;
+      animation: pulseButton 1.8s ease-in-out infinite;
+    }
+
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .slot {
+      background: linear-gradient(180deg, #ffe0a6, #ffc76f);
+      border: 4px solid #8b4513;
+      border-radius: 22px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: inset 0 0 14px rgba(0,0,0,0.13), 0 10px 20px rgba(0,0,0,0.15);
+      transform-origin: center;
+    }
+
+    .slot-title {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #7a2e0d;
+    }
+
+    .fruit {
+      font-size: 82px;
+      background: white;
+      border-radius: 20px;
+      padding: 15px;
+      border: 3px solid #7a2e0d;
+      min-height: 135px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.08);
+    }
+
+    .fruit-name {
+      margin-top: 12px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .slot.spinning {
+      animation: shakeSlot 0.22s linear infinite;
+    }
+
+    .slot.spinning .fruit {
+      animation: spinFruit 0.33s linear infinite;
+      background: #fff7d7;
+    }
+
+    .slot.revealed {
+      animation: popReveal 0.5s ease both;
+    }
+
+    .result {
+      background: white;
+      border: 3px dashed #7a2e0d;
+      padding: 20px;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 23px;
+      font-weight: bold;
+      margin: 18px 0;
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result.win {
+      background: #e7ffe7;
+      border-color: #1f7a1f;
+      color: #0d5c0d;
+      animation: winGlow 1s ease infinite alternate;
+    }
+
+    .result.lose {
+      background: #fff0f0;
+      border-color: #9c1d1d;
+      color: #7a0f0f;
+    }
+
+    .big-fruit-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 72vh;
+      text-align: center;
+      position: relative;
+    }
+
+    .big-fruit {
+      font-size: clamp(130px, 35vw, 240px);
+      background: white;
+      border: 7px solid #7a2e0d;
+      border-radius: 38px;
+      padding: 35px;
+      width: 100%;
+      max-width: 470px;
+      min-height: 290px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 18px 35px rgba(0,0,0,0.25), inset 0 0 20px rgba(0,0,0,0.08);
+    }
+
+    .big-fruit.waiting {
+      animation: waitingPulse 1.4s ease-in-out infinite;
+    }
+
+    .big-fruit.spinning {
+      animation: bigSpin 0.22s linear infinite;
+      background: #fff7d7;
+    }
+
+    .big-fruit.revealed {
+      animation: bigReveal 0.65s ease both;
+    }
+
+    .big-name {
+      margin-top: 24px;
+      font-size: clamp(34px, 8vw, 64px);
+      font-weight: bold;
+      color: #7a2e0d;
+      text-transform: uppercase;
+      text-shadow: 0 3px 0 rgba(255, 211, 107, 0.75);
+    }
+
+    .prize-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .prize-card {
+      background: white;
+      border: 3px solid #7a2e0d;
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+      animation: prizeEnter 0.35s ease both;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+
+    .prize-card button {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 14px;
+      padding: 12px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 2px solid #7a2e0d;
+      font-size: 16px;
+      margin-bottom: 10px;
+      outline: none;
+      background: white;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 4px rgba(229, 139, 37, 0.25);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.11);
+    }
+
+    th, td {
+      border-bottom: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #ffe0a6;
+      color: #7a2e0d;
+    }
+
+    .small-buttons {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .small-buttons button {
+      padding: 8px 10px;
+      font-size: 13px;
+      box-shadow: none;
+    }
+
+    .confetti {
+      position: fixed;
+      top: -20px;
+      width: 10px;
+      height: 14px;
+      border-radius: 3px;
+      z-index: 9999;
+      animation: fallConfetti 2.8s linear forwards;
+      pointer-events: none;
+    }
+
+    @keyframes enterApp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes pulseButton {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.015);
+      }
+    }
+
+    @keyframes shakeSlot {
+      0% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(-3px) rotate(-1deg); }
+      50% { transform: translateX(3px) rotate(1deg); }
+      75% { transform: translateX(-2px) rotate(-1deg); }
+      100% { transform: translateX(0) rotate(0deg); }
+    }
+
+    @keyframes spinFruit {
+      0% { transform: scale(1) rotate(0deg); filter: blur(0); }
+      50% { transform: scale(1.08) rotate(6deg); filter: blur(1px); }
+      100% { transform: scale(1) rotate(0deg); filter: blur(0); }
+    }
+
+    @keyframes popReveal {
+      0% { transform: scale(0.92); }
+      60% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes waitingPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.82;
+      }
+      50% {
+        transform: scale(1.025);
+        opacity: 1;
+      }
+    }
+
+    @keyframes bigSpin {
+      0% { transform: rotate(-2deg) scale(1); filter: blur(0); }
+      50% { transform: rotate(2deg) scale(1.04); filter: blur(1px); }
+      100% { transform: rotate(-2deg) scale(1); filter: blur(0); }
+    }
+
+    @keyframes bigReveal {
+      0% {
+        opacity: 0.4;
+        transform: scale(0.75) rotate(-7deg);
+      }
+      65% {
+        opacity: 1;
+        transform: scale(1.12) rotate(3deg);
+      }
+      100% {
+        transform: scale(1) rotate(0);
+      }
+    }
+
+    @keyframes winGlow {
+      from {
+        box-shadow: 0 0 0 rgba(31,122,31,0);
+      }
+      to {
+        box-shadow: 0 0 24px rgba(31,122,31,0.55);
+      }
+    }
+
+    @keyframes prizeEnter {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes fallConfetti {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(105vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 12px;
+      }
+
+      .app {
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .slots {
+        grid-template-columns: 1fr;
+      }
+
+      .fruit {
+        font-size: 66px;
+      }
+
+      .big-fruit {
+        min-height: 250px;
+      }
+
+      table {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body class="firebase-loading">
+  <div class="app">
+    <p class="status" id="authStatus">Conectando ao Firebase...</p>
+
+    <section id="homeScreen">
+      <h1>Tigrinho Humano</h1>
+      <h2>Sistema de Sorteio</h2>
+
+      <div class="warning">
+        Escolha o modo de uso deste aparelho.
+      </div>
+
+      <div class="links">
+        <a href="?mode=controle">Celular do Controle</a>
+        <a href="?mode=tigrinho&id=1">Celular Tigrinho 1</a>
+        <a href="?mode=tigrinho&id=2">Celular Tigrinho 2</a>
+        <a href="?mode=tigrinho&id=3">Celular Tigrinho 3</a>
+        <a href="?mode=admin">Administração das Prendas</a>
+      </div>
+    </section>
+
+    <section id="controleScreen" class="hidden">
+      <h1>Controle do Sorteio</h1>
+      <p class="status">A pessoa entrega a ficha, aguarda, e o responsável aperta o botão de sorteio.</p>
+
+      <button id="btnSortear" class="main-button">Começar sorteio</button>
+
+      <div class="slots">
+        <div class="slot" id="slot1">
+          <div class="slot-title">Tigrinho 1</div>
+          <div class="fruit" id="ctrlFruit1">?</div>
+          <div class="fruit-name" id="ctrlName1">Aguardando</div>
+        </div>
+
+        <div class="slot" id="slot2">
+          <div class="slot-title">Tigrinho 2</div>
+          <div class="fruit" id="ctrlFruit2">?</div>
+          <div class="fruit-name" id="ctrlName2">Aguardando</div>
+        </div>
+
+        <div class="slot" id="slot3">
+          <div class="slot-title">Tigrinho 3</div>
+          <div class="fruit" id="ctrlFruit3">?</div>
+          <div class="fruit-name" id="ctrlName3">Aguardando</div>
+        </div>
+      </div>
+
+      <div class="result" id="resultadoControle">
+        Nenhum sorteio iniciado.
+      </div>
+
+      <div id="premioArea" class="hidden">
+        <h2>Selecionar prenda entregue</h2>
+        <p class="status">As opções aparecem 5 segundos depois se a pessoa ganhar. Ao selecionar, o sistema tira 1 unidade do estoque.</p>
+        <div class="prize-grid" id="listaPremios"></div>
+      </div>
+
+      <br>
+      <a href="?">Voltar ao menu</a>
+    </section>
+
+    <section id="tigrinhoScreen" class="hidden">
+      <div class="big-fruit-screen">
+        <h1 id="tigrinhoTitle">Tigrinho</h1>
+        <p class="status" id="roundStatus">Aguardando sorteio...</p>
+        <div class="big-fruit waiting" id="tigrinhoFruit">?</div>
+        <div class="big-name" id="tigrinhoName">Aguardando</div>
+      </div>
+    </section>
+
+    <section id="adminScreen" class="hidden">
+      <h1>Administração das Prendas</h1>
+
+      <h3>Cadastrar nova prenda</h3>
+      <input id="prizeName" placeholder="Nome da prenda. Ex: Pirulito, Chocolate, Chaveiro..." />
+      <input id="prizeStock" type="number" min="0" placeholder="Quantidade em estoque" />
+      <button id="btnAddPrize">Cadastrar prenda</button>
+      <button id="btnSeed" class="blue">Cadastrar lista inicial de exemplos</button>
+
+      <h3>Estoque atual</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Prenda</th>
+            <th>Estoque</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="prizeTable"></tbody>
+      </table>
+
+      <br>
+      <a href="?">Voltar ao menu</a>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      update,
+      onValue,
+      get,
+      runTransaction,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCBIDgnvkSeHNdSS_mUr3ORaISGMTk0zyQ",
+      authDomain: "barraca-263c8.firebaseapp.com",
+      databaseURL: "https://barraca-263c8-default-rtdb.firebaseio.com",
+      projectId: "barraca-263c8",
+      storageBucket: "barraca-263c8.firebasestorage.app",
+      messagingSenderId: "1043182043544",
+      appId: "1:1043182043544:web:81bc4eaefa37a06cebebed",
+      measurementId: "G-ZVKDV68B6C"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get("mode") || "home";
+    const tigrinhoId = params.get("id") || "1";
+
+    const FRUITS = [
+      { id: "banana", label: "Banana", emoji: "🍌" },
+      { id: "uva", label: "Uva", emoji: "🍇" },
+      { id: "laranja", label: "Laranja", emoji: "🍊" }
+    ];
+
+    const FAKE_SPIN = ["🍌", "🍇", "🍊", "⭐", "🍒"];
+
+    let firebaseReady = false;
+    let currentRound = null;
+    let prizes = {};
+    let prizeTimer = null;
+    let lastPrizeRoundId = null;
+    let lastAnimatedControlRound = null;
+    let lastAnimatedTigrinhoRound = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function setFirebaseReady(isReady) {
+      firebaseReady = isReady;
+
+      document.body.classList.toggle("firebase-loading", !isReady);
+
+      document.querySelectorAll("button, input").forEach((element) => {
+        element.disabled = !isReady;
+      });
+    }
+
+    function requireFirebaseReady() {
+      if (!firebaseReady) {
+        alert("Aguarde conectar ao Firebase antes de usar o sistema.");
+        return false;
+      }
+
+      return true;
+    }
+
+    function showScreen(screenId) {
+      ["homeScreen", "controleScreen", "tigrinhoScreen", "adminScreen"].forEach(id => {
+        $(id).classList.add("hidden");
+      });
+
+      $(screenId).classList.remove("hidden");
+    }
+
+    function fruitById(id) {
+      return FRUITS.find(f => f.id === id) || {
+        id: "none",
+        label: "Aguardando",
+        emoji: "?"
+      };
+    }
+
+    function randomFruitId() {
+      return FRUITS[Math.floor(Math.random() * FRUITS.length)].id;
+    }
+
+    function calcularResultado(fruits) {
+      const values = [fruits["1"], fruits["2"], fruits["3"]];
+
+      const todasIguais =
+        values[0] &&
+        values[0] === values[1] &&
+        values[1] === values[2];
+
+      if (todasIguais) {
+        return {
+          won: true,
+          prizeLevel: "prenda",
+          text: "Ganhou! As 3 frutas são iguais. Prenda liberada."
+        };
+      }
+
+      return {
+        won: false,
+        prizeLevel: "nenhuma",
+        text: "Não ganhou desta vez. Só ganha com 3 frutas iguais."
+      };
+    }
+
+    function startControlAnimation() {
+      for (let i = 1; i <= 3; i++) {
+        $("slot" + i).classList.remove("revealed");
+        $("slot" + i).classList.add("spinning");
+        $("ctrlName" + i).textContent = "Sorteando...";
+      }
+
+      const interval = setInterval(() => {
+        for (let i = 1; i <= 3; i++) {
+          $("ctrlFruit" + i).textContent = FAKE_SPIN[Math.floor(Math.random() * FAKE_SPIN.length)];
+        }
+      }, 90);
+
+      return interval;
+    }
+
+    function stopControlAnimation(interval, round) {
+      clearInterval(interval);
+
+      for (let i = 1; i <= 3; i++) {
+        const fruit = fruitById(round.fruits?.[String(i)]);
+        const slot = $("slot" + i);
+
+        slot.classList.remove("spinning");
+        slot.classList.add("revealed");
+
+        $("ctrlFruit" + i).textContent = fruit.emoji;
+        $("ctrlName" + i).textContent = fruit.label;
+      }
+    }
+
+    function setResultVisual(round) {
+      const resultBox = $("resultadoControle");
+
+      resultBox.classList.remove("win", "lose");
+
+      if (round.won) {
+        resultBox.classList.add("win");
+      } else {
+        resultBox.classList.add("lose");
+      }
+    }
+
+    function launchConfetti() {
+      const colors = ["#ffcf33", "#ff6b35", "#4caf50", "#1d5f9c", "#e91e63", "#ffffff"];
+
+      for (let i = 0; i < 55; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 0.45 + "s";
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 3300);
+      }
+    }
+
+    async function autenticar() {
+      setFirebaseReady(false);
+
+      try {
+        await signInAnonymously(auth);
+
+        $("authStatus").textContent = "Conectado ao Firebase.";
+        setFirebaseReady(true);
+      } catch (error) {
+        console.error("Erro no login anônimo:", error);
+        $("authStatus").textContent = "Erro no login anônimo. Ative Authentication > Anonymous no Firebase.";
+
+        setFirebaseReady(false);
+        alert("Erro no Firebase Auth: " + error.message);
+      }
+    }
+
+    async function sortear() {
+      if (!requireFirebaseReady()) return;
+
+      $("btnSortear").disabled = true;
+      $("resultadoControle").classList.remove("win", "lose");
+      $("resultadoControle").textContent = "Sorteando...";
+      $("premioArea").classList.add("hidden");
+
+      const fruits = {
+        "1": randomFruitId(),
+        "2": randomFruitId(),
+        "3": randomFruitId()
+      };
+
+      const resultado = calcularResultado(fruits);
+      const roundId = "SORTEIO-" + Date.now();
+
+      const roundData = {
+        id: roundId,
+        fruits,
+        won: resultado.won,
+        prizeLevel: resultado.prizeLevel,
+        resultText: resultado.text,
+        prizeSelected: null,
+        status: "sorteado",
+        animationMs: 1800,
+        createdAt: serverTimestamp()
+      };
+
+      try {
+        await set(ref(db, "currentRound"), roundData);
+        await set(ref(db, "logs/" + roundId), roundData);
+      } catch (error) {
+        console.error("Erro ao salvar sorteio:", error);
+        alert("Erro ao registrar o sorteio no Firebase: " + error.message);
+      }
+
+      setTimeout(() => {
+        if (firebaseReady) {
+          $("btnSortear").disabled = false;
+        }
+      }, 2300);
+    }
+
+    function renderControle(round) {
+      if (!round) {
+        $("resultadoControle").textContent = "Nenhum sorteio iniciado.";
+        return;
+      }
+
+      currentRound = round;
+
+      if (lastAnimatedControlRound !== round.id) {
+        lastAnimatedControlRound = round.id;
+
+        const interval = startControlAnimation();
+
+        setTimeout(() => {
+          stopControlAnimation(interval, round);
+
+          $("resultadoControle").textContent = round.resultText || "Resultado não encontrado.";
+          setResultVisual(round);
+
+          if (round.won) {
+            launchConfetti();
+          }
+
+          handlePrizeArea(round);
+        }, round.animationMs || 1800);
+
+        return;
+      }
+
+      for (let i = 1; i <= 3; i++) {
+        const fruit = fruitById(round.fruits?.[String(i)]);
+        $("slot" + i).classList.remove("spinning");
+        $("ctrlFruit" + i).textContent = fruit.emoji;
+        $("ctrlName" + i).textContent = fruit.label;
+      }
+
+      if (round.prizeSelected) {
+        $("resultadoControle").textContent =
+          `${round.resultText} Prenda entregue: ${round.prizeSelected.name}.`;
+      } else {
+        $("resultadoControle").textContent = round.resultText || "Resultado não encontrado.";
+      }
+
+      setResultVisual(round);
+      handlePrizeArea(round);
+    }
+
+    function handlePrizeArea(round) {
+      if (round.won && !round.prizeSelected) {
+        if (lastPrizeRoundId !== round.id) {
+          lastPrizeRoundId = round.id;
+          $("premioArea").classList.add("hidden");
+
+          if (prizeTimer) clearTimeout(prizeTimer);
+
+          prizeTimer = setTimeout(() => {
+            if (!firebaseReady) return;
+
+            $("premioArea").classList.remove("hidden");
+            renderPrizeOptions();
+          }, 5000);
+        }
+      } else {
+        $("premioArea").classList.add("hidden");
+      }
+
+      if (round.prizeSelected) {
+        $("resultadoControle").textContent =
+          `${round.resultText} Prenda entregue: ${round.prizeSelected.name}.`;
+        $("premioArea").classList.add("hidden");
+      }
+    }
+
+    function renderTigrinho(round) {
+      $("tigrinhoTitle").textContent = "Tigrinho " + tigrinhoId;
+
+      if (!round || !round.fruits) {
+        $("roundStatus").textContent = "Aguardando sorteio...";
+        $("tigrinhoFruit").textContent = "?";
+        $("tigrinhoName").textContent = "Aguardando";
+        $("tigrinhoFruit").className = "big-fruit waiting";
+        return;
+      }
+
+      if (lastAnimatedTigrinhoRound !== round.id) {
+        lastAnimatedTigrinhoRound = round.id;
+
+        $("roundStatus").textContent = "Sorteando...";
+        $("tigrinhoName").textContent = "Atenção";
+        $("tigrinhoFruit").className = "big-fruit spinning";
+
+        const interval = setInterval(() => {
+          $("tigrinhoFruit").textContent = FAKE_SPIN[Math.floor(Math.random() * FAKE_SPIN.length)];
+        }, 85);
+
+        setTimeout(() => {
+          clearInterval(interval);
+
+          const fruit = fruitById(round.fruits[tigrinhoId]);
+
+          $("roundStatus").textContent = "Sorteio: " + round.id;
+          $("tigrinhoFruit").className = "big-fruit revealed";
+          $("tigrinhoFruit").textContent = fruit.emoji;
+          $("tigrinhoName").textContent = fruit.label;
+        }, round.animationMs || 1800);
+
+        return;
+      }
+
+      const fruit = fruitById(round.fruits[tigrinhoId]);
+
+      $("roundStatus").textContent = "Sorteio: " + round.id;
+      $("tigrinhoFruit").className = "big-fruit revealed";
+      $("tigrinhoFruit").textContent = fruit.emoji;
+      $("tigrinhoName").textContent = fruit.label;
+    }
+
+    function renderPrizeOptions() {
+      const container = $("listaPremios");
+      container.innerHTML = "";
+
+      const availablePrizes = Object.entries(prizes)
+        .filter(([id, prize]) => prize.active !== false && Number(prize.stock || 0) > 0);
+
+      if (availablePrizes.length === 0) {
+        container.innerHTML = "<p>Nenhuma prenda disponível em estoque.</p>";
+        return;
+      }
+
+      availablePrizes.forEach(([id, prize], index) => {
+        const card = document.createElement("div");
+        card.className = "prize-card";
+        card.style.animationDelay = `${index * 0.035}s`;
+
+        card.innerHTML = `
+          <strong>${prize.name}</strong>
+          <p>Estoque: ${prize.stock}</p>
+          <button data-prize="${id}">Entregar esta prenda</button>
+        `;
+
+        card.querySelector("button").addEventListener("click", () => selecionarPrenda(id));
+        container.appendChild(card);
+      });
+    }
+
+    async function selecionarPrenda(prizeId) {
+      if (!requireFirebaseReady()) return;
+
+      if (!currentRound || !currentRound.won || currentRound.prizeSelected) {
+        alert("Este sorteio não permite selecionar prenda.");
+        return;
+      }
+
+      const confirmar = confirm("Confirmar entrega desta prenda?");
+      if (!confirmar) return;
+
+      const prizeRef = ref(db, "prizes/" + prizeId + "/stock");
+
+      try {
+        const transactionResult = await runTransaction(prizeRef, (currentStock) => {
+          const stock = Number(currentStock || 0);
+
+          if (stock <= 0) {
+            return;
+          }
+
+          return stock - 1;
+        });
+
+        if (!transactionResult.committed) {
+          alert("Essa prenda acabou no estoque.");
+          return;
+        }
+
+        const prizeSnapshot = await get(ref(db, "prizes/" + prizeId));
+        const prize = prizeSnapshot.val();
+
+        const prizeSelected = {
+          id: prizeId,
+          name: prize.name,
+          stockAfter: transactionResult.snapshot.val(),
+          selectedAt: serverTimestamp()
+        };
+
+        await update(ref(db, "currentRound"), {
+          status: "premioEntregue",
+          prizeSelected
+        });
+
+        await update(ref(db, "logs/" + currentRound.id), {
+          status: "premioEntregue",
+          prizeSelected
+        });
+
+        alert("Prenda registrada e estoque atualizado.");
+      } catch (error) {
+        console.error("Erro ao selecionar prenda:", error);
+        alert("Erro ao selecionar a prenda: " + error.message);
+      }
+    }
+
+    async function cadastrarPrenda() {
+      if (!requireFirebaseReady()) return;
+
+      const name = $("prizeName").value.trim();
+      const stock = Number($("prizeStock").value);
+
+      if (!name) {
+        alert("Digite o nome da prenda.");
+        return;
+      }
+
+      if (Number.isNaN(stock) || stock < 0) {
+        alert("Digite uma quantidade válida.");
+        return;
+      }
+
+      const id = name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") + "-" + Date.now();
+
+      try {
+        await set(ref(db, "prizes/" + id), {
+          name,
+          stock,
+          active: true,
+          createdAt: serverTimestamp()
+        });
+
+        $("prizeName").value = "";
+        $("prizeStock").value = "";
+
+        alert("Prenda cadastrada.");
+      } catch (error) {
+        console.error("Erro ao cadastrar prenda:", error);
+        alert("Erro ao cadastrar prenda: " + error.message);
+      }
+    }
+
+    async function cadastrarExemplos() {
+      if (!requireFirebaseReady()) return;
+
+      const exemplos = [
+        ["Pirulito", 20],
+        ["Bala sortida", 30],
+        ["Chocolate pequeno", 15],
+        ["Paçoca", 20],
+        ["Pipoca doce", 15],
+        ["Chiclete", 20],
+        ["Adesivo", 15],
+        ["Caneta colorida", 10],
+        ["Mini chaveiro", 8],
+        ["Pulseira simples", 8],
+        ["Caderno pequeno", 5],
+        ["Marcador de página", 10],
+        ["Vale brinde surpresa", 5],
+        ["Salgadinho pequeno", 8],
+        ["Prenda especial", 3]
+      ];
+
+      try {
+        for (const [name, stock] of exemplos) {
+          const id = name
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "") + "-" + Date.now() + "-" + Math.floor(Math.random() * 9999);
+
+          await set(ref(db, "prizes/" + id), {
+            name,
+            stock,
+            active: true,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        alert("Lista inicial cadastrada.");
+      } catch (error) {
+        console.error("Erro ao cadastrar exemplos:", error);
+        alert("Erro ao cadastrar exemplos: " + error.message);
+      }
+    }
+
+    function renderAdminTable() {
+      const tbody = $("prizeTable");
+      tbody.innerHTML = "";
+
+      const entries = Object.entries(prizes);
+
+      if (entries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Nenhuma prenda cadastrada.</td></tr>`;
+        return;
+      }
+
+      entries.forEach(([id, prize]) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${prize.name}</td>
+          <td>${prize.stock || 0}</td>
+          <td>${prize.active === false ? "Oculta" : "Ativa"}</td>
+          <td>
+            <div class="small-buttons">
+              <button class="blue" data-action="plus">+1</button>
+              <button class="gray" data-action="minus">-1</button>
+              <button class="danger" data-action="toggle">${prize.active === false ? "Ativar" : "Ocultar"}</button>
+            </div>
+          </td>
+        `;
+
+        tr.querySelector('[data-action="plus"]').addEventListener("click", () => alterarEstoque(id, 1));
+        tr.querySelector('[data-action="minus"]').addEventListener("click", () => alterarEstoque(id, -1));
+        tr.querySelector('[data-action="toggle"]').addEventListener("click", () => alternarPrenda(id, prize.active === false));
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function alterarEstoque(id, change) {
+      if (!requireFirebaseReady()) return;
+
+      try {
+        await runTransaction(ref(db, "prizes/" + id + "/stock"), (currentStock) => {
+          const stock = Number(currentStock || 0);
+          return Math.max(0, stock + change);
+        });
+      } catch (error) {
+        console.error("Erro ao alterar estoque:", error);
+        alert("Erro ao alterar estoque: " + error.message);
+      }
+    }
+
+    async function alternarPrenda(id, shouldActivate) {
+      if (!requireFirebaseReady()) return;
+
+      try {
+        await update(ref(db, "prizes/" + id), {
+          active: shouldActivate
+        });
+      } catch (error) {
+        console.error("Erro ao alterar status da prenda:", error);
+        alert("Erro ao alterar status da prenda: " + error.message);
+      }
+    }
+
+    function listenFirebase() {
+      onValue(ref(db, "currentRound"), (snapshot) => {
+        const round = snapshot.val();
+
+        if (mode === "controle") {
+          renderControle(round);
+        }
+
+        if (mode === "tigrinho") {
+          renderTigrinho(round);
+        }
+      }, (error) => {
+        console.error("Erro ao ler currentRound:", error);
+        alert("Erro ao ler currentRound: " + error.message);
+      });
+
+      onValue(ref(db, "prizes"), (snapshot) => {
+        prizes = snapshot.val() || {};
+
+        if (mode === "admin") {
+          renderAdminTable();
+        }
+
+        if (mode === "controle" && !$("premioArea").classList.contains("hidden")) {
+          renderPrizeOptions();
+        }
+      }, (error) => {
+        console.error("Erro ao ler prizes:", error);
+        alert("Erro ao ler prizes: " + error.message);
+      });
+    }
+
+    function initMode() {
+      if (mode === "controle") {
+        showScreen("controleScreen");
+        $("btnSortear").addEventListener("click", sortear);
+      } else if (mode === "tigrinho") {
+        showScreen("tigrinhoScreen");
+      } else if (mode === "admin") {
+        showScreen("adminScreen");
+        $("btnAddPrize").addEventListener("click", cadastrarPrenda);
+        $("btnSeed").addEventListener("click", cadastrarExemplos);
+      } else {
+        showScreen("homeScreen");
+      }
+    }
+
+    setFirebaseReady(false);
+    initMode();
+    await autenticar();
+
+    if (firebaseReady) {
+      listenFirebase();
+    }
+  </script>
+</body>
+</html>
